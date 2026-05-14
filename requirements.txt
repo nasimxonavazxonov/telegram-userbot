@@ -1,0 +1,7 @@
+telethon>=1.36.0
+anthropic>=0.40.0
+openai-whisper>=20231117
+APScheduler>=3.10.4
+SQLAlchemy>=2.0.0
+python-dotenv>=1.0.0
+cryptg

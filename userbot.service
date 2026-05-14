@@ -1,0 +1,22 @@
+[Unit]
+Description=Nasimxon's Telegram Userbot Assistant
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/userbot
+ExecStart=/opt/userbot/venv/bin/python main.py
+Restart=on-failure
+RestartSec=15
+StandardOutput=append:/var/log/userbot.log
+StandardError=append:/var/log/userbot.log
+Environment=PYTHONUNBUFFERED=1
+
+# Basic hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
