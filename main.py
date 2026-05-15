@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import logging
 import os
 import tempfile
@@ -42,16 +41,13 @@ async def main():
     voice_handler = VoiceHandler(config)
     scheduler = Scheduler()
 
-    session_b64 = os.getenv("SESSION_STRING")
-    if session_b64:
-        session_bytes = base64.b64decode(session_b64)
-        session_path = config.SESSION_NAME + ".session"
-        with open(session_path, "wb") as f:
-            f.write(session_bytes)
-        logger.info("SESSION_STRING dan session fayli tiklandi.")
+    session_string = os.getenv("SESSION_STRING")
+    session = StringSession(session_string) if session_string else config.SESSION_NAME
+    if session_string:
+        logger.info("SESSION_STRING dan StringSession ishlatilmoqda.")
 
     client = TelegramClient(
-        config.SESSION_NAME,
+        session,
         config.TELEGRAM_API_ID,
         config.TELEGRAM_API_HASH,
     )
