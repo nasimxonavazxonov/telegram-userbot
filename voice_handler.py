@@ -1,7 +1,21 @@
 import asyncio
 import logging
+import os
+import shutil
 
 logger = logging.getLogger(__name__)
+
+
+def _ensure_ffmpeg_in_path():
+    ffmpeg = shutil.which("ffmpeg")
+    if ffmpeg:
+        return
+    for candidate in ["/usr/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/nix/var/nix/profiles/default/bin/ffmpeg"]:
+        if os.path.isfile(candidate):
+            os.environ["PATH"] = os.path.dirname(candidate) + ":" + os.environ.get("PATH", "")
+            logger.info(f"ffmpeg PATH ga qo'shildi: {candidate}")
+            return
+    logger.warning("ffmpeg topilmadi — ovoz fayllarini qayta ishlash ishlamaydi")
 
 
 class VoiceHandler:
@@ -9,6 +23,7 @@ class VoiceHandler:
         self._model = None
         self._model_name = config.WHISPER_MODEL
         self._language = config.WHISPER_LANGUAGE or None
+        _ensure_ffmpeg_in_path()
 
     def _ensure_loaded(self):
         if self._model is None:
@@ -22,7 +37,7 @@ class VoiceHandler:
         result = self._model.transcribe(
             audio_path,
             language=self._language,
-            fp16=False,  # CPU compatibility (no native float16)
+            fp16=False,
         )
         return result["text"].strip()
 
