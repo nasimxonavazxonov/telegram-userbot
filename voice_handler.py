@@ -36,7 +36,7 @@ class VoiceHandler:
         self._ensure_loaded()
         result = self._model.transcribe(
             audio_path,
-            language=self._language,
+            language=self._language or "uz",
             fp16=False,
         )
         return result["text"].strip()
