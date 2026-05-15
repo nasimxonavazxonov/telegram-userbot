@@ -1,9 +1,11 @@
 import asyncio
+import base64
 import logging
 import os
 import tempfile
 
 from telethon import TelegramClient, events
+from telethon.sessions import StringSession
 
 from config import Config
 from voice_handler import VoiceHandler
@@ -39,6 +41,14 @@ async def main():
 
     voice_handler = VoiceHandler(config)
     scheduler = Scheduler()
+
+    session_b64 = os.getenv("SESSION_STRING")
+    if session_b64:
+        session_bytes = base64.b64decode(session_b64)
+        session_path = config.SESSION_NAME + ".session"
+        with open(session_path, "wb") as f:
+            f.write(session_bytes)
+        logger.info("SESSION_STRING dan session fayli tiklandi.")
 
     client = TelegramClient(
         config.SESSION_NAME,
