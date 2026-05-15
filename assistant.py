@@ -191,21 +191,55 @@ class Assistant:
             return f"Xato: {e}"
 
     async def _find_entity(self, contact: str):
-        """Resolve contact by @username, phone, or dialog name search."""
+        """Resolve contact by @username, phone, or name search."""
+        # 1. Direct resolve: @username, phone number, or numeric ID
         try:
             return await self._telegram.get_entity(contact)
         except Exception:
             pass
-        # Fallback: search open dialogs by display name
-        async for dialog in self._telegram.iter_dialogs():
+
+        q = contact.strip().lower()
+
+        # 2. Server-side contact search — handles Uzbek/Cyrillic names well
+        try:
+            from telethon.tl import functions as tl_functions
+            res = await self._telegram(tl_functions.contacts.SearchRequest(q=contact, limit=20))
+            for user in res.users:
+                full = f"{user.first_name or ''} {user.last_name or ''}".strip()
+                if q in full.lower() or full.lower() in q:
+                    logger.info(f"Kontakt topildi (SearchRequest): {full}")
+                    return user
+            for chat in res.chats:
+                if q in (chat.title or "").lower():
+                    logger.info(f"Chat topildi (SearchRequest): {chat.title}")
+                    return chat
+        except Exception as e:
+            logger.debug(f"contacts.SearchRequest xatosi: {e}")
+
+        # 3. Local contacts list search
+        try:
+            contacts = await self._telegram.get_contacts()
+            for user in contacts:
+                full = f"{user.first_name or ''} {user.last_name or ''}".strip()
+                if q in full.lower():
+                    logger.info(f"Kontakt topildi (get_contacts): {full}")
+                    return user
+        except Exception as e:
+            logger.debug(f"get_contacts xatosi: {e}")
+
+        # 4. Dialog iteration fallback (recent chats)
+        async for dialog in self._telegram.iter_dialogs(limit=200):
             ent = dialog.entity
-            name = ""
             if hasattr(ent, "first_name"):
                 name = f"{ent.first_name or ''} {ent.last_name or ''}".strip()
             elif hasattr(ent, "title"):
                 name = ent.title or ""
-            if name and contact.lower() in name.lower():
+            else:
+                continue
+            if name and q in name.lower():
+                logger.info(f"Kontakt topildi (dialogs): {name}")
                 return ent
+
         raise ValueError(
             f"'{contact}' kontakti topilmadi. "
             "@username yoki +998... telefon formatini ishlatib ko'ring."
