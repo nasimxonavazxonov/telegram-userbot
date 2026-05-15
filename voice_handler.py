@@ -21,7 +21,7 @@ def _ensure_ffmpeg_in_path():
 class VoiceHandler:
     def __init__(self, config):
         self._model = None
-        self._model_name = config.WHISPER_MODEL
+        self._model_name = "tiny"
         self._language = config.WHISPER_LANGUAGE or None
         _ensure_ffmpeg_in_path()
 
